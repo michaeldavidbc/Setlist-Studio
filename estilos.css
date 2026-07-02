@@ -83,10 +83,15 @@ header h1 {
 /* Contenedor que hará scroll */
 .contenedor-drag { 
     flex: 1; 
-    overflow-y: auto; 
     padding-right: 5px;
     padding-left: 5px; 
     direction: rtl; 
+}
+
+.contenedor-drag#canciones {
+    overflow-y: auto;
+    /* Limita la altura de la lista de canciones del catálogo para que no sea excesivamente larga en pantallas altas. */
+    max-height: 680px; /* Altura fija para mostrar ~14 canciones antes de hacer scroll */
 }
 
 .item-cancion { 
@@ -94,7 +99,7 @@ header h1 {
     justify-content: space-between; 
     align-items: center; 
     background: #1a1a1a; 
-    padding: 15px; 
+    padding: 10px 15px; /* Reducido para que quepan más elementos en la vista */
     margin-bottom: 8px; 
     border-radius: 4px; 
     cursor: grab; 
@@ -221,7 +226,8 @@ header h1 {
     margin-bottom: 10px;
 }
 .controles-fondo {
-    margin-bottom: 15px;
+    /* Movido al panel izquierdo, debajo de la lista de canciones */
+    margin-top: 20px;
 }
 
 .galeria-fondos-horizontal {
@@ -284,6 +290,7 @@ header h1 {
     cursor: pointer;
     font-size: 0.9rem;
     transition: background-color 0.2s, color 0.2s;
+    text-align: center;
 }
 
 .btn-subir:hover {
@@ -339,17 +346,17 @@ header h1 {
     border: 2px solid var(--gris-borde); 
     border-radius: 8px; 
     padding: 10px 20px 20px; 
-    overflow-y: auto;
+    overflow: hidden; /* Evita que el lienzo tenga scroll, el scroll es interno */
     direction: rtl;
     display: flex; /* Añadido para que el contenedor de canciones se expanda */
     flex-direction: column; /* Organiza los hijos verticalmente */
-    margin: 0 auto; /* Centrar el lienzo en el panel */
     background-size: cover;
     background-position: center;
     transition: background 0.3s ease;
     width: 100%; /* Ocupar el ancho disponible del panel */
-    max-width: 405px; /* Limitar para que no sea demasiado grande en pantallas anchas */
+    max-width: 405px; /* Limitar para que no sea demasiado grande */
     aspect-ratio: 9 / 16; /* Forzar la proporción 9:16 para un preview realista */
+    margin: 0 auto; /* Centrar el lienzo en el panel */
 }
 
 /* --- Display de Info dentro del Lienzo --- */

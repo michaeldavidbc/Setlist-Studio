@@ -31,6 +31,16 @@
           class="input-busqueda"
         />
         <div id="canciones" class="contenedor-drag"></div>
+
+        <!-- Sección de Fondos movida al panel izquierdo -->
+        <div class="controles-fondo">
+          <p class="subtitulo-controles">Fondo para Exportación</p>
+          <div id="galeria-fondos" class="galeria-fondos-horizontal">
+            <!-- Las miniaturas de los fondos se generarán aquí -->
+          </div>
+          <label for="subir-fondo" class="btn-subir"> + Añadir Imagen </label>
+          <input type="file" id="subir-fondo" accept="image/*" hidden />
+        </div>
       </section>
 
       <section class="panel-setlist">
@@ -54,14 +64,6 @@
           <input type="date" id="fecha-show" class="input-fecha" />
         </div>
 
-        <div class="controles-fondo">
-          <p class="subtitulo-controles">Fondo para Exportación (9:16)</p>
-          <div id="galeria-fondos" class="galeria-fondos-horizontal">
-            <!-- Las miniaturas de los fondos se generarán aquí -->
-          </div>
-          <label for="subir-fondo" class="btn-subir"> + Añadir Imagen </label>
-          <input type="file" id="subir-fondo" accept="image/*" hidden />
-        </div>
         <div id="canvas-setlist" class="lienzo-oscuro">
           <div id="display-info" class="display-info-estilo">
             <h3 id="titulo-evento">Nombre del Evento</h3>
