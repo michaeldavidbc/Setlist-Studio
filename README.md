@@ -10,4 +10,4 @@ El Lienzo de Trabajo: La interfaz permite al usuario seleccionar y arrastrar (co
 
 El Producto Final: Una vez definido el orden, la aplicación "toma una foto" de esa lista y exporta un archivo de imagen final. Esto permite usar fondos predeterminados o personalizados—ideal para aplicar estéticas minimalistas, fondos oscuros profundos y de alto contraste que sean fáciles de leer rápidamente en las pantallas de los celulares de todo el crew durante los shows en vivo.
 
-En resumen: Entran datos puros de canciones por un lado, los organizas moviendo bloques visuales en la pantalla, y sale una imagen gráfica oficial con el cronograma del show listo para compartir.
+En resumen: Entran datos puros de canciones por un lado, los organizas moviendo bloques visuales en la pantalla, y sale una imagen gráfica oficial con el cronograma del show listo para compartir...
