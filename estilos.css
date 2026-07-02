@@ -51,11 +51,30 @@ header h1 {
     min-height: 0; 
 }
 
-.panel-catalogo h2 {
+.cabecera-catalogo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 20px;
+}
+
+.grupo-botones-catalogo {
+    display: flex;
+    gap: 8px;
+}
+
+.panel-catalogo h2 {
+    margin-bottom: 0; /* Controlado por el nuevo contenedor .cabecera-catalogo */
     color: var(--gris-texto);
     text-transform: uppercase;
     font-size: 0.9rem;
+}
+
+.contador {
+    color: var(--gris-texto);
+    font-weight: normal;
+    font-size: 0.8rem;
+    margin-left: 10px;
 }
 
 /* Buscador */
@@ -124,6 +143,7 @@ header h1 {
     text-align: center; /* Centrado perfecto del texto */
     line-height: 1.2; /* Hacer las líneas más compactas */
 }
+.item-setlist:hover { background-color: rgba(255,255,255,0.05); }
 
 .setlist-song-name {
     font-weight: bold; /* Texto en negrilla */
@@ -208,6 +228,15 @@ header h1 {
 #setlist-activo.texto-negro .observacion-texto { color: #444; }
 
 #setlist-activo.texto-negro .break-texto { color: #555; }
+
+/* Espacio inicial para el cuadro de info que ahora es absoluto */
+#setlist-activo {
+    position: absolute;
+    width: 100%;
+    left: 0;
+    cursor: move;
+    z-index: 9;
+}
 
 /* Panel Setlist */
 .panel-setlist { flex: 2; display: flex; flex-direction: column; }
@@ -298,6 +327,54 @@ header h1 {
     color: var(--blanco-texto);
 }
 
+.grupo-acciones-fondo {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+    margin-top: 5px; /* Pequeño espacio superior */
+}
+
+.sub-grupo-color {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+#btn-invertir-degradado {
+    display: none; /* Oculto por defecto, se muestra con JS */
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    font-size: 1.2rem;
+}
+
+.input-color-fondo {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.input-color-fondo::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.input-color-fondo::-webkit-color-swatch {
+    border: 2px solid var(--gris-borde);
+    border-radius: 4px;
+}
+
+.input-color-fondo::-moz-color-swatch {
+    border: 2px solid var(--gris-borde);
+    border-radius: 4px;
+}
+
 /* --- Nuevos Controles de Configuración --- */
 .controles-setlist { 
     display: flex; 
@@ -305,6 +382,43 @@ header h1 {
     margin-bottom: 15px; 
 }
 
+.controles-setlist .clear-btn {
+    display: none; /* Oculto por defecto */
+    flex-shrink: 0; /* Evita que el botón se encoja */
+    width: 42px;
+    padding: 0; /* Anula el padding de .btn-neon */
+    font-size: 1.5rem;
+    line-height: 1;
+    border-color: #ff4d4d;
+    color: #ff4d4d;
+}
+
+.controles-setlist .clear-btn:hover {
+    background-color: #ff4d4d;
+    color: var(--blanco-texto);
+}
+
+.input-color-texto {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    background-color: transparent;
+    border: 1px solid var(--gris-borde);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.input-color-texto::-webkit-color-swatch-wrapper {
+    padding: 4px;
+}
+
+.input-color-texto::-webkit-color-swatch {
+    border: none;
+    border-radius: 2px;
+}
 .input-evento, .input-fecha {
     padding: 10px;
     background: #1a1a1a;
@@ -329,9 +443,25 @@ header h1 {
     border-radius: 4px;
 }
 
+.cabecera-catalogo .btn-neon {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    text-transform: none;
+}
+
 .btn-neon:hover {
     background-color: var(--neon-acento);
     color: var(--vanta-black);
+}
+
+.btn-neon.btn-limpiar {
+    border-color: #ff4d4d;
+    color: #ff4d4d;
+}
+
+.btn-neon.btn-limpiar:hover {
+    background-color: #ff4d4d;
+    color: var(--blanco-texto);
 }
 
 .btn-neon.btn-icono {
@@ -357,14 +487,31 @@ header h1 {
     max-width: 405px; /* Limitar para que no sea demasiado grande */
     aspect-ratio: 9 / 16; /* Forzar la proporción 9:16 para un preview realista */
     margin: 0 auto; /* Centrar el lienzo en el panel */
+    position: relative; /* Para posicionar elementos hijos de forma absoluta */
+}
+
+.center-guide {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 2px;
+    height: 100%;
+    background-color: rgba(225, 86, 0, 0.75);
+    display: none; /* Oculto por defecto */
+    z-index: 5;
+    transform: translateX(-50%);
+    box-shadow: 0 0 7px rgba(225, 86, 0, 0.5);
 }
 
 /* --- Display de Info dentro del Lienzo --- */
 .display-info-estilo {
+    position: absolute;
+    width: 90%;
     text-align: center;
-    margin-bottom: 80px; /* Espacio de ~5 renglones antes de las canciones */
-    padding: 0 10px; /* Eliminar padding vertical para subir el texto */
-    direction: ltr; 
+    padding: 0 10px;
+    direction: ltr;
+    cursor: move;
+    z-index: 10;
 }
 
 .display-info-estilo h3 { 

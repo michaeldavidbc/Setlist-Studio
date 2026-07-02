@@ -9,24 +9,36 @@ const galeriaFondos = document.getElementById('galeria-fondos');
 const inputEvento = document.getElementById('nombre-evento');
 const inputFecha = document.getElementById('fecha-show');
 const displayTitulo = document.getElementById('titulo-evento');
+const displayTituloContainer = document.getElementById('display-titulo');
+const displayFechaContainer = document.getElementById('display-fecha');
 const displayFecha = document.getElementById('subtitulo-fecha');
 const setlistContenedor = document.getElementById('setlist-activo');
+const centerGuide = document.getElementById('center-guide');
+const clearEvento = document.getElementById('clear-evento');
+const clearFecha = document.getElementById('clear-fecha');
 const btnExportarImg = document.getElementById('btn-exportar-img');
+const btnLimpiarSetlist = document.getElementById('btn-limpiar-setlist');
 const btnExportarPdf = document.getElementById('btn-exportar-pdf');
+const btnExportarExcel = document.getElementById('btn-exportar-excel');
+const btnImportarExcel = document.getElementById('btn-importar-excel');
+const inputImportarExcel = document.getElementById('importar-excel');
+const contadorCatalogo = document.getElementById('contador-catalogo');
+const contadorSetlist = document.getElementById('contador-setlist');
+const inputColor = document.getElementById('color-fondo');
+const inputColorEvento = document.getElementById('color-evento');
+const inputColorFecha = document.getElementById('color-fecha');
+const btnAplicarDegradado = document.getElementById('btn-aplicar-degradado');
+const btnInvertirDegradado = document.getElementById('btn-invertir-degradado');
 
 // --- Estado Inicial ---
 let listaActual;
 const datosGuardados = localStorage.getItem('setlistData');
-
-// Si no hay datos guardados o la lista está vacía, se usa el catálogo de canciones por defecto.
-if (!datosGuardados || datosGuardados === '[]') {
-    listaActual = catalogoCanciones;
-} else {
-    listaActual = JSON.parse(datosGuardados);
-}
-
+// Carga el catálogo desde localStorage o inicia uno vacío si no existe.
+listaActual = datosGuardados ? JSON.parse(datosGuardados) : [];
 let fondosPersonalizados = JSON.parse(localStorage.getItem('fondosPersonalizados')) || [];
 let setlist = JSON.parse(localStorage.getItem('setlistActivo')) || [];
+let colorEventoPersonalizado = localStorage.getItem('colorEvento') || null;
+let colorFechaPersonalizado = localStorage.getItem('colorFecha') || null;
 
 // --- Funciones de Persistencia ---
 function guardarDatos() {
@@ -40,6 +52,7 @@ function guardarSetlist() {
 // --- Lógica de Renderizado ---
 function renderizar(lista) {
     contenedor.innerHTML = '';
+    contadorCatalogo.textContent = `(${listaActual.length})`;
     const listaOrdenada = [...lista].sort((a, b) => {
         if (a.favorito !== b.favorito) {
             return b.favorito - a.favorito;
@@ -91,8 +104,11 @@ function renderizar(lista) {
 
 function renderizarSetlist() {
     setlistContenedor.innerHTML = '';
+    const songCount = setlist.filter(item => item.type === 'song').length;
+    contadorSetlist.textContent = `(${songCount} ${songCount === 1 ? 'canción' : 'canciones'})`;
+
     if (setlist.length === 0) {
-        setlistContenedor.style.fontSize = ''; // Restablecer al valor por defecto del CSS
+        setlistContenedor.style.fontSize = '';
         return;
     }
 
@@ -100,7 +116,6 @@ function renderizarSetlist() {
     setlist.forEach((item, index) => {
         const div = document.createElement('div');
         div.className = 'item-setlist';
-        div.setAttribute('draggable', true);
         div.dataset.index = index;
 
         const isBreak = item.type === 'break';
@@ -159,13 +174,6 @@ function renderizarSetlist() {
             renderizarSetlist();
         };
 
-        div.addEventListener('dragstart', e => {
-            e.dataTransfer.setData('text/plain', JSON.stringify({ source: 'setlist', index }));
-            setTimeout(() => div.classList.add('dragging'), 0);
-        });
-
-        div.addEventListener('dragend', () => div.classList.remove('dragging'));
-
         setlistContenedor.appendChild(div);
     });
     ajustarFuenteSetlist();
@@ -196,6 +204,16 @@ function getExportFileName() {
     // Replace invalid characters for a filename and default to 'evento'
     const safeEventName = eventName.replace(/[^a-z0-9_ -]/gi, '_') || 'evento';
     return `${safeEventName}_Setlist`;
+}
+
+function isColorDark(hexColor) {
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    // Formula for luminance
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance < 0.5;
 }
 
 // --- Lógica de Exportación ---
@@ -263,16 +281,91 @@ btnExportarPdf.onclick = () => {
         alert("Ocurrió un error al exportar el PDF.");
     });
 };
-// --- Gestión de Canciones ---
-btnAgregar.onclick = () => {
-    if (inputNueva.value.trim() !== "") {
-        const nuevaCancion = { nombre: inputNueva.value.toUpperCase(), favorito: false };
-        listaActual.push(nuevaCancion);
-        guardarDatos();
-        inputNueva.value = '';
-        renderizar(listaActual);
+
+btnLimpiarSetlist.onclick = () => {
+    if (setlist.length === 0) return; // No hacer nada si ya está vacío
+    if (confirm('¿Estás seguro de que quieres limpiar todo el setlist? Esta acción no se puede deshacer.')) {
+        setlist = [];
+        guardarSetlist();
+        renderizarSetlist();
     }
 };
+
+inputColorEvento.oninput = (e) => {
+    colorEventoPersonalizado = e.target.value;
+    displayTitulo.style.color = colorEventoPersonalizado;
+    localStorage.setItem('colorEvento', colorEventoPersonalizado);
+};
+
+inputColorFecha.oninput = (e) => {
+    colorFechaPersonalizado = e.target.value;
+    displayFecha.style.color = colorFechaPersonalizado;
+    localStorage.setItem('colorFecha', colorFechaPersonalizado);
+};
+
+inputColor.oninput = (e) => {
+    const color = e.target.value;
+    aplicarFondo(color);
+    actualizarFondoActivo(color);
+};
+
+btnAplicarDegradado.onclick = () => {
+    const fondoActual = localStorage.getItem('fondoElegido') || 'negro';
+    const colorSeleccionado = inputColor.value;
+
+    if (fondoActual.startsWith('gradient-')) {
+        // Si ya hay un degradado, vuelve al color sólido
+        aplicarFondo(colorSeleccionado);
+        actualizarFondoActivo(colorSeleccionado);
+    } else {
+        // Si no hay degradado, aplícalo (hacia abajo por defecto)
+        const gradientValue = `gradient-down:${colorSeleccionado}`;
+        aplicarFondo(gradientValue);
+        actualizarFondoActivo(gradientValue);
+    }
+};
+
+btnInvertirDegradado.onclick = () => {
+    const fondoActual = localStorage.getItem('fondoElegido') || 'negro';
+    if (!fondoActual.startsWith('gradient-')) return; // Solo funciona si hay degradado
+
+    const [gradient, color] = fondoActual.split(':');
+    const direction = gradient.split('-')[1];
+
+    const nuevaDireccion = direction === 'down' ? 'up' : 'down';
+    const nuevoFondo = `gradient-${nuevaDireccion}:${color}`;
+
+    aplicarFondo(nuevoFondo);
+    actualizarFondoActivo(nuevoFondo);
+};
+btnAgregar.onclick = () => {
+    const nombreCancion = inputNueva.value.trim();
+    if (nombreCancion !== "") {
+        const nombreEnMayusculas = nombreCancion.toUpperCase();
+
+        // Añadir al catálogo
+        const nuevaCancionCatalogo = { nombre: nombreEnMayusculas, favorito: false };
+        listaActual.push(nuevaCancionCatalogo);
+
+        // Añadir también al setlist
+        const nuevaCancionSetlist = { type: 'song', nombre: nombreEnMayusculas, observacion: '' };
+        setlist.push(nuevaCancionSetlist);
+
+        // Guardar y renderizar todo
+        guardarDatos();
+        guardarSetlist();
+        inputNueva.value = '';
+        renderizar(listaActual);
+        renderizarSetlist();
+    }
+};
+
+inputNueva.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault(); // Evita cualquier comportamiento por defecto del Enter
+        btnAgregar.click(); // Simula un clic en el botón de agregar
+    }
+});
 
 buscador.oninput = (e) => {
     const texto = e.target.value.toUpperCase();
@@ -280,27 +373,146 @@ buscador.oninput = (e) => {
     renderizar(filtradas);
 };
 
-function aplicarFondo(valor) {
-    if (valor === 'negro') {
-        lienzo.style.backgroundImage = 'none';
-        lienzo.style.backgroundColor = 'var(--vanta-black)';
-        displayTitulo.style.color = 'var(--neon-acento)'; // Restaurar color neón
-        displayFecha.style.color = 'var(--blanco-texto)'; // Restaurar color blanco
-        setlistContenedor.classList.remove('texto-negro');
-    } else {
-        // Para fondos blancos o de imagen, el texto es negro.
-        displayTitulo.style.color = '#000000';
-        displayFecha.style.color = '#000000';
-        setlistContenedor.classList.add('texto-negro');
+// --- Gestión de Catálogo (Importar) ---
+btnImportarExcel.onclick = () => {
+    inputImportarExcel.click();
+};
 
-        if (valor === 'blanco') {
-        lienzo.style.backgroundImage = 'none';
-        lienzo.style.backgroundColor = '#ffffff';
-        } else { // Es una imagen
-        lienzo.style.backgroundImage = `url('${valor}')`;
-        lienzo.style.backgroundColor = 'transparent';
+inputImportarExcel.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        try {
+            const data = new Uint8Array(event.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            
+            // Convierte la hoja a un array de arrays (filas)
+            const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+
+            // Omitir encabezado si existe
+            if (rows.length > 0 && typeof rows[0][0] === 'string' && rows[0][0].toLowerCase().includes('nombre')) {
+                rows.shift();
+            }
+
+            const nuevasCanciones = rows.map(row => {
+                const nombreCancion = row[0] ? row[0].toString().trim() : null;
+                if (!nombreCancion) return null; // Ignorar filas sin nombre de canción
+
+                const esFavorito = row[1] ? row[1].toString().trim() === '*' : false;
+                return { nombre: nombreCancion.toUpperCase(), favorito: esFavorito };
+            }).filter(Boolean); // Elimina las entradas nulas
+
+            if (nuevasCanciones.length > 0) {
+                if (confirm(`Se encontraron ${nuevasCanciones.length} canciones. ¿Quieres reemplazar tu catálogo actual? Esta acción no se puede deshacer.`)) {
+                    listaActual = nuevasCanciones;
+                    guardarDatos();
+                    renderizar(listaActual);
+                    alert('Catálogo importado y guardado correctamente.');
+                }
+            } else {
+                alert('No se encontraron canciones en la primera columna del archivo.');
+            }
+        } catch (error) {
+            console.error("Error al importar el archivo:", error);
+            alert("Ocurrió un error al leer el archivo. Asegúrate de que sea un archivo de Excel o CSV válido. Revisa la consola para más detalles.");
         }
+    };
+    reader.readAsArrayBuffer(file);
+    e.target.value = ''; // Resetea el valor para poder cargar el mismo archivo otra vez
+};
+
+// --- Gestión de Catálogo (Exportar) ---
+btnExportarExcel.onclick = () => {
+    if (listaActual.length === 0) {
+        alert("El catálogo está vacío. No hay nada que exportar.");
+        return;
     }
+
+    // 1. Prepara los datos con encabezado y dos columnas, ordenados alfabéticamente.
+    const sortedList = [...listaActual].sort((a, b) => a.nombre.localeCompare(b.nombre));
+    const dataForSheet = [
+        ["Nombre Canción", "Favorito"], // Encabezados
+        ...sortedList.map(cancion => [
+            cancion.nombre,
+            cancion.favorito ? '*' : '' // Añade '*' en la segunda columna si es favorito
+        ])
+    ];
+
+    // 2. Crea la hoja de cálculo y el libro.
+    const worksheet = XLSX.utils.aoa_to_sheet(dataForSheet);
+    worksheet['!cols'] = [{ wch: 40 }, { wch: 10 }]; // Ancho de columnas
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Catálogo");
+    XLSX.writeFile(workbook, "catalogo_canciones_actualizado.xlsx");
+};
+
+function aplicarFondo(valor) {
+  let defaultTituloColor, defaultFechaColor;
+  let isDark = true;
+  btnInvertirDegradado.style.display = 'none'; // Ocultar por defecto
+
+  if (valor === 'negro') {
+    lienzo.style.backgroundImage = 'none';
+    lienzo.style.backgroundColor = 'var(--vanta-black)';
+    defaultTituloColor = 'var(--neon-acento)';
+    defaultFechaColor = 'var(--blanco-texto)';
+    isDark = true;
+  } else if (valor.startsWith('gradient-')) {
+    const [gradient, color] = valor.split(':');
+    const direction = gradient.split('-')[1]; // 'up' or 'down'
+    const gradientDirection = direction === 'up' ? 'to top' : 'to bottom';
+    lienzo.style.backgroundImage = `linear-gradient(${gradientDirection}, ${color}, var(--vanta-black))`;
+    lienzo.style.backgroundColor = 'transparent';
+    btnInvertirDegradado.style.display = 'block'; // Mostrar botón de invertir
+    if (isColorDark(color)) {
+      defaultTituloColor = 'var(--blanco-texto)';
+      defaultFechaColor = 'var(--blanco-texto)';
+      isDark = true;
+    } else {
+      defaultTituloColor = '#000000';
+      defaultFechaColor = '#000000';
+      isDark = false;
+    }
+  } else if (valor === 'blanco') {
+    lienzo.style.backgroundImage = 'none';
+    lienzo.style.backgroundColor = '#ffffff';
+    defaultTituloColor = '#000000';
+    defaultFechaColor = '#000000';
+    isDark = false;
+  } else if (valor.startsWith('#')) { // Custom color from picker
+    lienzo.style.backgroundImage = 'none';
+    lienzo.style.backgroundColor = valor;
+    if (isColorDark(valor)) {
+      defaultTituloColor = 'var(--blanco-texto)';
+      defaultFechaColor = 'var(--blanco-texto)';
+      isDark = true;
+    } else {
+      defaultTituloColor = '#000000';
+      defaultFechaColor = '#000000';
+      isDark = false;
+    }
+  } else { // Es una imagen
+    lienzo.style.backgroundImage = `url('${valor}')`;
+    lienzo.style.backgroundColor = 'transparent';
+    defaultTituloColor = '#000000';
+    defaultFechaColor = '#000000';
+    isDark = false;
+  }
+
+  // Apply colors respecting custom choices
+  displayTitulo.style.color = colorEventoPersonalizado || defaultTituloColor;
+  displayFecha.style.color = colorFechaPersonalizado || defaultFechaColor;
+
+  if (isDark) {
+    setlistContenedor.classList.remove('texto-negro');
+  } else {
+    setlistContenedor.classList.add('texto-negro');
+  }
 }
 
 function actualizarFondoActivo(fondoUrl) {
@@ -310,6 +522,12 @@ function actualizarFondoActivo(fondoUrl) {
             thumb.classList.add('activo');
         }
     });
+    if (fondoUrl.startsWith('#')) {
+        inputColor.value = fondoUrl;
+    } else if (fondoUrl.startsWith('gradient-')) {
+        const color = fondoUrl.split(':')[1];
+        inputColor.value = color;
+    }
     localStorage.setItem('fondoElegido', fondoUrl);
 }
 
@@ -389,10 +607,16 @@ lienzo.addEventListener('dragover', e => {
 
 lienzo.addEventListener('drop', e => {
     e.preventDefault();
+    const dataString = e.dataTransfer.getData('text/plain');
+
+    // Si el dato no es un JSON para una canción, no hacer nada.
+    // Esto evita el conflicto con el arrastre del cuadro de información.
+    if (!dataString || !dataString.startsWith('{')) {
+        return;
+    }
+
     const draggableElements = [...setlistContenedor.querySelectorAll('.item-setlist:not(.dragging)')];
     const afterElement = getDragAfterElement(setlistContenedor, e.clientY);
-    const dataString = e.dataTransfer.getData('text/plain');
-    if (!dataString) return;
 
     const data = JSON.parse(dataString);
 
@@ -400,10 +624,6 @@ lienzo.addEventListener('drop', e => {
         const newSong = { type: 'song', nombre: data.nombre, observacion: '' };
         const index = afterElement ? draggableElements.indexOf(afterElement) : draggableElements.length;
         setlist.splice(index, 0, newSong);
-    } else if (data.source === 'setlist') {
-        const [movedItem] = setlist.splice(data.index, 1);
-        const newIndex = afterElement ? draggableElements.indexOf(afterElement) : draggableElements.length;
-        setlist.splice(newIndex, 0, movedItem);
     }
     
     guardarSetlist();
@@ -430,24 +650,161 @@ if (subirFondo) {
     };
 }
 
-// --- Lógica de Texto (Evento/Fecha) ---
 inputEvento.oninput = () => {
-    localStorage.setItem('nombreEvento', inputEvento.value);
-    displayTitulo.textContent = inputEvento.value || 'Nombre del Evento';
+    const eventName = inputEvento.value;
+    localStorage.setItem('nombreEvento', eventName);
+    displayTitulo.textContent = eventName;
+    displayTitulo.style.visibility = eventName ? 'visible' : 'hidden';
+    clearEvento.style.display = eventName ? 'block' : 'none';
 };
 
 inputFecha.onchange = () => {
-    localStorage.setItem('fechaShow', inputFecha.value);
-    displayFecha.textContent = inputFecha.value || 'Fecha del Show';
+    const showDate = inputFecha.value;
+    localStorage.setItem('fechaShow', showDate);
+    clearFecha.style.display = showDate ? 'block' : 'none';
+    if (showDate) {
+        const date = new Date(showDate + 'T00:00:00'); // Evitar problemas de zona horaria
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        displayFecha.textContent = date.toLocaleDateString('es-ES', options);
+        displayFecha.style.visibility = 'visible';
+    } else {
+        displayFecha.textContent = '';
+        displayFecha.style.visibility = 'hidden';
+    }
 };
+
+clearEvento.onclick = () => {
+    inputEvento.value = '';
+    inputEvento.dispatchEvent(new Event('input'));
+};
+
+clearFecha.onclick = () => {
+    inputFecha.value = '';
+    inputFecha.dispatchEvent(new Event('change'));
+};
+
+function makeVerticallyDraggable(element, storageKey, defaultConfig) {
+    let position = JSON.parse(localStorage.getItem(storageKey)) || defaultConfig;
+
+    // Apply initial position
+    element.style.top = position.top;
+
+    element.addEventListener('mousedown', (e) => {
+        // No arrastrar si se hace clic en un botón de control
+        if (e.target.closest('.btn-borrar-setlist, .btn-add-obs, .btn-add-break')) {
+            return;
+        }
+        if (e.button !== 0) return; // Solo mover con el botón izquierdo
+        e.preventDefault(); // Previene la selección de texto
+
+        const lienzoRect = lienzo.getBoundingClientRect();
+        const offsetY = e.clientY - element.getBoundingClientRect().top;
+
+        function onMouseMove(moveEvent) {
+            let newY = moveEvent.clientY - lienzoRect.top - offsetY;
+
+            // Limitar al contenedor
+            newY = Math.max(0, Math.min(newY, lienzoRect.height - element.offsetHeight));
+
+            element.style.top = `${newY}px`;
+        }
+
+        function onMouseUp() {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+
+            // Guardar la posición final
+            position = { top: element.style.top };
+            localStorage.setItem(storageKey, JSON.stringify(position));
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    });
+}
+
+// --- Lógica de Posición de Texto ---
+function makeDraggable(element, storageKey, defaultConfig) {
+    let position = JSON.parse(localStorage.getItem(storageKey)) || defaultConfig;
+
+    // Apply initial position
+    element.style.top = position.top;
+    element.style.left = position.left;
+    element.style.transform = position.transform;
+
+    element.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return; // Solo mover con el botón izquierdo
+        e.preventDefault();
+
+        const lienzoRect = lienzo.getBoundingClientRect();
+        const offsetX = e.clientX - element.getBoundingClientRect().left;
+        const offsetY = e.clientY - element.getBoundingClientRect().top;
+
+        function onMouseMove(moveEvent) {
+            let newX = moveEvent.clientX - lienzoRect.left - offsetX;
+            let newY = moveEvent.clientY - lienzoRect.top - offsetY;
+
+            // Lógica para centrar y mostrar guía
+            const elementCenter = newX + element.offsetWidth / 2;
+            const lienzoCenter = lienzoRect.width / 2;
+            const snapThreshold = 5; // píxeles
+
+            if (Math.abs(elementCenter - lienzoCenter) < snapThreshold) {
+                newX = lienzoCenter - element.offsetWidth / 2;
+                centerGuide.style.display = 'block';
+            } else {
+                centerGuide.style.display = 'none';
+            }
+
+            // Limitar al contenedor
+            newX = Math.max(0, Math.min(newX, lienzoRect.width - element.offsetWidth));
+            newY = Math.max(0, Math.min(newY, lienzoRect.height - element.offsetHeight));
+
+            element.style.left = `${newX}px`;
+            element.style.top = `${newY}px`;
+            element.style.transform = 'translateX(0)'; // Anular el centrado inicial
+        }
+
+        function onMouseUp() {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            centerGuide.style.display = 'none'; // Ocultar guía
+
+            // Guardar la posición final
+            position = {
+                top: element.style.top,
+                left: element.style.left,
+                transform: element.style.transform
+            };
+            localStorage.setItem(storageKey, JSON.stringify(position));
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    });
+}
 
 // --- Carga Inicial al Abrir la App ---
 window.onload = () => {
-    inputEvento.value = localStorage.getItem('nombreEvento') || '';
-    inputFecha.value = localStorage.getItem('fechaShow') || '';
-    displayTitulo.textContent = inputEvento.value || 'Nombre del Evento';
-    displayFecha.textContent = inputFecha.value || 'Fecha del Show';
-    
+    const savedEventName = localStorage.getItem('nombreEvento') || '';
+    inputEvento.value = savedEventName;
+    displayTitulo.textContent = savedEventName;
+    displayTitulo.style.visibility = savedEventName ? 'visible' : 'hidden';
+    clearEvento.style.display = savedEventName ? 'block' : 'none';
+
+    const savedShowDate = localStorage.getItem('fechaShow') || '';
+    inputFecha.value = savedShowDate;
+    clearFecha.style.display = savedShowDate ? 'block' : 'none';
+    if (savedShowDate) {
+        const date = new Date(savedShowDate + 'T00:00:00');
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        displayFecha.textContent = date.toLocaleDateString('es-ES', options);
+        displayFecha.style.visibility = 'visible';
+    } else {
+        displayFecha.textContent = '';
+        displayFecha.style.visibility = 'hidden';
+    }
+
     renderizar(listaActual);
     renderizarSetlist();
 
@@ -456,4 +813,17 @@ window.onload = () => {
     const fondoGuardado = localStorage.getItem('fondoElegido') || 'negro'; // Negro por defecto
     aplicarFondo(fondoGuardado);
     actualizarFondoActivo(fondoGuardado);
+
+    // Sincronizar los selectores de color con los valores guardados (si existen)
+    if (colorEventoPersonalizado) {
+        inputColorEvento.value = colorEventoPersonalizado;
+    }
+    if (colorFechaPersonalizado) {
+        inputColorFecha.value = colorFechaPersonalizado;
+    }
+
+    // Iniciar la funcionalidad de arrastre para ambos elementos
+    makeDraggable(displayTituloContainer, 'titleBoxPosition', { top: '40px', left: '50%', transform: 'translateX(-50%)' });
+    makeDraggable(displayFechaContainer, 'dateBoxPosition', { top: '70px', left: '50%', transform: 'translateX(-50%)' });
+    makeVerticallyDraggable(setlistContenedor, 'songBlockPosition', { top: '120px' });
 };

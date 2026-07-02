@@ -13,7 +13,24 @@
 
     <main class="contenedor-principal">
       <section class="panel-catalogo">
-        <h2>Catálogo Disponible</h2>
+        <div class="cabecera-catalogo">
+          <h2>
+            Catálogo Disponible<span
+              id="contador-catalogo"
+              class="contador"
+            ></span>
+          </h2>
+          <div class="grupo-botones-catalogo">
+            <button id="btn-importar-excel" class="btn-neon">Importar</button>
+            <button id="btn-exportar-excel" class="btn-neon">Exportar</button>
+          </div>
+          <input
+            type="file"
+            id="importar-excel"
+            accept=".xlsx, .xls, .csv"
+            hidden
+          />
+        </div>
 
         <div class="input-grupo">
           <input
@@ -34,21 +51,51 @@
 
         <!-- Sección de Fondos movida al panel izquierdo -->
         <div class="controles-fondo">
-          <p class="subtitulo-controles">Fondo para Exportación</p>
+          <p class="subtitulo-controles">Fondo</p>
           <div id="galeria-fondos" class="galeria-fondos-horizontal">
             <!-- Las miniaturas de los fondos se generarán aquí -->
           </div>
-          <label for="subir-fondo" class="btn-subir"> + Añadir Imagen </label>
-          <input type="file" id="subir-fondo" accept="image/*" hidden />
+          <div class="grupo-acciones-fondo">
+            <label for="subir-fondo" class="btn-subir"> + Añadir Imagen </label>
+            <input type="file" id="subir-fondo" accept="image/*" hidden />
+            <div class="sub-grupo-color">
+              <input
+                type="color"
+                id="color-fondo"
+                class="input-color-fondo"
+                value="#050505"
+                title="Elegir color de fondo"
+              />
+              <button
+                id="btn-aplicar-degradado"
+                class="btn-subir"
+                title="Aplicar/Quitar degradado con el color seleccionado"
+              >
+                D
+              </button>
+              <button
+                id="btn-invertir-degradado"
+                class="btn-subir"
+                title="Invertir dirección del degradado"
+              >
+                ⇅
+              </button>
+            </div>
+          </div>
         </div>
       </section>
 
       <section class="panel-setlist">
         <div class="cabecera-setlist">
-          <h2>Setlist Oficial</h2>
+          <h2>
+            Setlist Oficial<span id="contador-setlist" class="contador"></span>
+          </h2>
           <div class="grupo-botones-cabecera">
             <button id="btn-exportar-img" class="btn-neon">
               Exportar Imagen
+            </button>
+            <button id="btn-limpiar-setlist" class="btn-neon btn-limpiar">
+              Limpiar
             </button>
             <button id="btn-exportar-pdf" class="btn-neon">Exportar PDF</button>
           </div>
@@ -61,12 +108,31 @@
             placeholder="Nombre del evento..."
             class="input-evento"
           />
+          <input
+            type="color"
+            id="color-evento"
+            class="input-color-texto"
+            value="#e15600"
+            title="Color del Título"
+          />
+          <button class="btn-neon clear-btn" id="clear-evento">×</button>
           <input type="date" id="fecha-show" class="input-fecha" />
+          <input
+            type="color"
+            id="color-fecha"
+            class="input-color-texto"
+            value="#f4f4f4"
+            title="Color de la Fecha"
+          />
+          <button class="btn-neon clear-btn" id="clear-fecha">×</button>
         </div>
 
         <div id="canvas-setlist" class="lienzo-oscuro">
-          <div id="display-info" class="display-info-estilo">
+          <div class="center-guide" id="center-guide"></div>
+          <div id="display-titulo" class="display-info-estilo">
             <h3 id="titulo-evento">Nombre del Evento</h3>
+          </div>
+          <div id="display-fecha" class="display-info-estilo">
             <p id="subtitulo-fecha">Fecha del Show</p>
           </div>
           <div id="setlist-activo" class="contenedor-drag"></div>
@@ -76,6 +142,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="canciones.js"></script>
     <script src="app.js"></script>
   </body>
