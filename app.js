@@ -29,6 +29,12 @@ const inputColorEvento = document.getElementById('color-evento');
 const inputColorFecha = document.getElementById('color-fecha');
 const btnAplicarDegradado = document.getElementById('btn-aplicar-degradado');
 const btnInvertirDegradado = document.getElementById('btn-invertir-degradado');
+const modalObservacion = document.getElementById('modal-observacion');
+const modalTitulo = document.getElementById('modal-titulo');
+const modalInput = document.getElementById('modal-input');
+const modalBtnCancelar = document.getElementById('modal-btn-cancelar');
+const modalBtnGuardar = document.getElementById('modal-btn-guardar');
+
 
 // --- Estado Inicial ---
 let listaActual;
@@ -39,6 +45,7 @@ let fondosPersonalizados = JSON.parse(localStorage.getItem('fondosPersonalizados
 let setlist = JSON.parse(localStorage.getItem('setlistActivo')) || [];
 let colorEventoPersonalizado = localStorage.getItem('colorEvento') || null;
 let colorFechaPersonalizado = localStorage.getItem('colorFecha') || null;
+let onModalSave = null; // Callback para el guardado del modal
 
 // --- Funciones de Persistencia ---
 function guardarDatos() {
@@ -149,35 +156,88 @@ function renderizarSetlist() {
             ${rightControlsHTML}
         `;
 
-        // --- Add Event Listeners ---
-        div.querySelector('.btn-add-obs').onclick = () => {
-            const obsActual = item.observacion || '';
-            const message = hasObs ? 'Editar texto (dejar en blanco para eliminar):' : 'Añadir texto:';
-            const nuevaObs = prompt(message, obsActual);
-            if (nuevaObs !== null) { // prompt returns null if user clicks cancel
-                item.observacion = nuevaObs.trim();
-                guardarSetlist();
-                renderizarSetlist();
-            }
-        };
-
-        div.querySelector('.btn-add-break').onclick = () => {
-            setlist.splice(index + 1, 0, { type: 'break', observacion: '' });
-            guardarSetlist();
-            renderizarSetlist();
-        };
-
-        div.querySelector('.btn-borrar-setlist').onclick = (e) => {
-            e.stopPropagation();
-            setlist.splice(index, 1);
-            guardarSetlist();
-            renderizarSetlist();
-        };
-
         setlistContenedor.appendChild(div);
     });
     ajustarFuenteSetlist();
 }
+
+function showObservacionModal(item) {
+    const hasObs = item.observacion && item.observacion.trim() !== '';
+    modalTitulo.textContent = hasObs ? 'Editar Texto' : 'Añadir Texto';
+    modalInput.value = item.observacion || '';
+    modalObservacion.style.display = 'flex';
+    modalInput.focus();
+
+    // Define lo que sucede cuando se hace clic en "Guardar"
+    onModalSave = () => {
+        item.observacion = modalInput.value.trim();
+        guardarSetlist();
+        renderizarSetlist();
+        hideObservacionModal();
+    };
+}
+
+function hideObservacionModal() {
+    modalObservacion.style.display = 'none';
+    onModalSave = null; // Limpia el callback para evitar ejecuciones accidentales
+}
+
+// --- Event Listeners del Modal ---
+modalBtnGuardar.onclick = () => {
+    if (onModalSave) {
+        onModalSave();
+    }
+};
+
+modalBtnCancelar.onclick = hideObservacionModal;
+
+modalInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { // Guardar con Enter (sin Shift)
+        e.preventDefault(); // Evita que se cree una nueva línea
+        modalBtnGuardar.click();
+    }
+});
+
+window.addEventListener('keydown', (e) => {
+    // Cierra el modal con la tecla Escape
+    if (e.key === 'Escape' && modalObservacion.style.display === 'flex') {
+        hideObservacionModal();
+    }
+});
+
+// --- Event Delegation para el Setlist ---
+setlistContenedor.addEventListener('click', (e) => {
+    const itemDiv = e.target.closest('.item-setlist');
+    if (!itemDiv) return;
+
+    const index = parseInt(itemDiv.dataset.index, 10);
+    // Validar que el índice sea un número válido dentro de los límites del array
+    if (isNaN(index) || index < 0 || index >= setlist.length) return;
+    
+    const item = setlist[index];
+
+    // Botón de añadir/editar observación
+    if (e.target.closest('.btn-add-obs')) {
+        showObservacionModal(item);
+        return;
+    }
+
+    // Botón de añadir descanso
+    if (e.target.closest('.btn-add-break')) {
+        setlist.splice(index + 1, 0, { type: 'break', observacion: '' });
+        guardarSetlist();
+        renderizarSetlist();
+        return;
+    }
+
+    // Botón de borrar del setlist
+    if (e.target.closest('.btn-borrar-setlist')) {
+        setlist.splice(index, 1);
+        guardarSetlist();
+        renderizarSetlist();
+        return;
+    }
+});
 
 function ajustarFuenteSetlist() {
     const numCanciones = setlist.length;
@@ -374,81 +434,67 @@ buscador.oninput = (e) => {
 };
 
 // --- Gestión de Catálogo (Importar) ---
-btnImportarExcel.onclick = () => {
-    inputImportarExcel.click();
-};
-
-inputImportarExcel.onchange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-        try {
-            const data = new Uint8Array(event.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            
-            // Convierte la hoja a un array de arrays (filas)
-            const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
-
-            // Omitir encabezado si existe
-            if (rows.length > 0 && typeof rows[0][0] === 'string' && rows[0][0].toLowerCase().includes('nombre')) {
-                rows.shift();
-            }
-
-            const nuevasCanciones = rows.map(row => {
-                const nombreCancion = row[0] ? row[0].toString().trim() : null;
-                if (!nombreCancion) return null; // Ignorar filas sin nombre de canción
-
-                const esFavorito = row[1] ? row[1].toString().trim() === '*' : false;
-                return { nombre: nombreCancion.toUpperCase(), favorito: esFavorito };
-            }).filter(Boolean); // Elimina las entradas nulas
-
-            if (nuevasCanciones.length > 0) {
-                if (confirm(`Se encontraron ${nuevasCanciones.length} canciones. ¿Quieres reemplazar tu catálogo actual? Esta acción no se puede deshacer.`)) {
-                    listaActual = nuevasCanciones;
-                    guardarDatos();
-                    renderizar(listaActual);
-                    alert('Catálogo importado y guardado correctamente.');
-                }
-            } else {
-                alert('No se encontraron canciones en la primera columna del archivo.');
-            }
-        } catch (error) {
-            console.error("Error al importar el archivo:", error);
-            alert("Ocurrió un error al leer el archivo. Asegúrate de que sea un archivo de Excel o CSV válido. Revisa la consola para más detalles.");
-        }
-    };
-    reader.readAsArrayBuffer(file);
-    e.target.value = ''; // Resetea el valor para poder cargar el mismo archivo otra vez
-};
-
-// --- Gestión de Catálogo (Exportar) ---
-btnExportarExcel.onclick = () => {
-    if (listaActual.length === 0) {
-        alert("El catálogo está vacío. No hay nada que exportar.");
-        return;
+btnImportarExcel.onclick = async () => {
+  try {
+    const filePath = await window.electronAPI.openExcelFile();
+    if (!filePath) {
+      // El usuario canceló el diálogo
+      return;
     }
 
-    // 1. Prepara los datos con encabezado y dos columnas, ordenados alfabéticamente.
-    const sortedList = [...listaActual].sort((a, b) => a.nombre.localeCompare(b.nombre));
-    const dataForSheet = [
-        ["Nombre Canción", "Favorito"], // Encabezados
-        ...sortedList.map(cancion => [
-            cancion.nombre,
-            cancion.favorito ? '*' : '' // Añade '*' en la segunda columna si es favorito
-        ])
-    ];
+    const nuevasCanciones = await window.electronAPI.readExcelFile(filePath);
 
-    // 2. Crea la hoja de cálculo y el libro.
-    const worksheet = XLSX.utils.aoa_to_sheet(dataForSheet);
-    worksheet['!cols'] = [{ wch: 40 }, { wch: 10 }]; // Ancho de columnas
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Catálogo");
-    XLSX.writeFile(workbook, "catalogo_canciones_actualizado.xlsx");
+    if (nuevasCanciones && nuevasCanciones.length > 0) {
+      if (
+        confirm(
+          `Se encontraron ${nuevasCanciones.length} canciones. ¿Quieres reemplazar tu catálogo actual? Esta acción no se puede deshacer.`
+        )
+      ) {
+        listaActual = nuevasCanciones;
+        guardarDatos();
+        renderizar(listaActual);
+        alert('Catálogo importado y guardado correctamente.');
+      }
+    } else {
+      alert('No se encontraron canciones válidas en el archivo.');
+    }
+  } catch (error) {
+    console.error('Error al importar el archivo:', error);
+    alert(
+      'Ocurrió un error al leer el archivo. Asegúrate de que sea un archivo de Excel o CSV válido. Revisa la consola para más detalles.'
+    );
+  }
+};
+
+inputImportarExcel.onchange = null; // El input ya no se usa para la lógica
+
+// --- Gestión de Catálogo (Exportar) ---
+btnExportarExcel.onclick = async () => {
+  if (listaActual.length === 0) {
+    alert('El catálogo está vacío. No hay nada que exportar.');
+    return;
+  }
+
+  const sortedList = [...listaActual].sort((a, b) =>
+    a.nombre.localeCompare(b.nombre)
+  );
+  const dataForSheet = [
+    ['Nombre Canción', 'Favorito'], // Encabezados
+    ...sortedList.map((cancion) => [
+      cancion.nombre,
+      cancion.favorito ? '*' : '',
+    ]),
+  ];
+
+  try {
+    const result = await window.electronAPI.saveExcelFile(dataForSheet);
+    if (result.success) {
+      alert(result.message);
+    }
+  } catch (error) {
+    console.error('Error al exportar el archivo:', error);
+    alert('Ocurrió un error al guardar el archivo.');
+  }
 };
 
 function aplicarFondo(valor) {
@@ -484,7 +530,8 @@ function aplicarFondo(valor) {
     defaultTituloColor = '#000000';
     defaultFechaColor = '#000000';
     isDark = false;
-  } else if (valor.startsWith('#')) { // Custom color from picker
+  } else if (valor.startsWith('#')) {
+    // Custom color from picker
     lienzo.style.backgroundImage = 'none';
     lienzo.style.backgroundColor = valor;
     if (isColorDark(valor)) {
@@ -496,7 +543,8 @@ function aplicarFondo(valor) {
       defaultFechaColor = '#000000';
       isDark = false;
     }
-  } else { // Es una imagen
+  } else {
+    // Es una imagen
     lienzo.style.backgroundImage = `url('${valor}')`;
     lienzo.style.backgroundColor = 'transparent';
     defaultTituloColor = '#000000';
@@ -516,314 +564,339 @@ function aplicarFondo(valor) {
 }
 
 function actualizarFondoActivo(fondoUrl) {
-    document.querySelectorAll('.fondo-thumbnail').forEach(thumb => {
-        thumb.classList.remove('activo');
-        if (thumb.dataset.fondo === fondoUrl) {
-            thumb.classList.add('activo');
-        }
-    });
-    if (fondoUrl.startsWith('#')) {
-        inputColor.value = fondoUrl;
-    } else if (fondoUrl.startsWith('gradient-')) {
-        const color = fondoUrl.split(':')[1];
-        inputColor.value = color;
+  document.querySelectorAll('.fondo-thumbnail').forEach((thumb) => {
+    thumb.classList.remove('activo');
+    if (thumb.dataset.fondo === fondoUrl) {
+      thumb.classList.add('activo');
     }
-    localStorage.setItem('fondoElegido', fondoUrl);
+  });
+  if (fondoUrl.startsWith('#')) {
+    inputColor.value = fondoUrl;
+  } else if (fondoUrl.startsWith('gradient-')) {
+    const color = fondoUrl.split(':')[1];
+    inputColor.value = color;
+  }
+  localStorage.setItem('fondoElegido', fondoUrl);
 }
 
 function renderizarFondos() {
-    galeriaFondos.innerHTML = '';
+  galeriaFondos.innerHTML = '';
 
-    const fondosBase = [
-        { nombre: 'Fondo Negro', valor: 'negro' },
-        { nombre: 'Fondo Blanco', valor: 'blanco' }
-    ];
+  const fondosBase = [
+    { nombre: 'Fondo Negro', valor: 'negro' },
+    { nombre: 'Fondo Blanco', valor: 'blanco' },
+  ];
 
-    // Renderizar fondos base
-    fondosBase.forEach(fondo => {
-        const thumbnail = document.createElement('div');
-        thumbnail.className = 'fondo-thumbnail';
-        thumbnail.dataset.fondo = fondo.valor;
-        thumbnail.title = fondo.nombre;
-        thumbnail.onclick = () => {
-            aplicarFondo(fondo.valor);
-            actualizarFondoActivo(fondo.valor);
-        };
-        galeriaFondos.appendChild(thumbnail);
-    });
+  // Renderizar fondos base
+  fondosBase.forEach((fondo) => {
+    const thumbnail = document.createElement('div');
+    thumbnail.className = 'fondo-thumbnail';
+    thumbnail.dataset.fondo = fondo.valor;
+    thumbnail.title = fondo.nombre;
+    thumbnail.onclick = () => {
+      aplicarFondo(fondo.valor);
+      actualizarFondoActivo(fondo.valor);
+    };
+    galeriaFondos.appendChild(thumbnail);
+  });
 
-    // Opciones personalizadas
-    fondosPersonalizados.forEach((fondoUrl, index) => {
-        const thumbnail = document.createElement('div');
-        thumbnail.className = 'fondo-thumbnail';
-        thumbnail.style.backgroundImage = `url('${fondoUrl}')`;
-        thumbnail.dataset.fondo = fondoUrl;
-        thumbnail.title = `Fondo Personalizado ${index + 1}`;
+  // Opciones personalizadas
+  fondosPersonalizados.forEach((fondoUrl, index) => {
+    const thumbnail = document.createElement('div');
+    thumbnail.className = 'fondo-thumbnail';
+    thumbnail.style.backgroundImage = `url('${fondoUrl}')`;
+    thumbnail.dataset.fondo = fondoUrl;
+    thumbnail.title = `Fondo Personalizado ${index + 1}`;
 
-        thumbnail.onclick = () => {
-            aplicarFondo(fondoUrl);
-            actualizarFondoActivo(fondoUrl);
-        };
+    thumbnail.onclick = () => {
+      aplicarFondo(fondoUrl);
+      actualizarFondoActivo(fondoUrl);
+    };
 
-        const btnBorrar = document.createElement('span');
-        btnBorrar.className = 'btn-borrar-fondo';
-        btnBorrar.innerHTML = '&times;';
-        btnBorrar.onclick = (e) => {
-            e.stopPropagation(); // Evita que se seleccione el fondo al borrarlo
-            if (confirm('¿Seguro que quieres eliminar este fondo?')) {
-                fondosPersonalizados.splice(index, 1);
-                localStorage.setItem('fondosPersonalizados', JSON.stringify(fondosPersonalizados));
-                // Si el fondo borrado era el activo, vuelve al negro por defecto
-                if (localStorage.getItem('fondoElegido') === fondoUrl) {
-                    aplicarFondo('negro');
-                    actualizarFondoActivo('negro');
-                }
-                renderizarFondos();
-            }
-        };
+    const btnBorrar = document.createElement('span');
+    btnBorrar.className = 'btn-borrar-fondo';
+    btnBorrar.innerHTML = '&times;';
+    btnBorrar.onclick = (e) => {
+      e.stopPropagation(); // Evita que se seleccione el fondo al borrarlo
+      if (confirm('¿Seguro que quieres eliminar este fondo?')) {
+        fondosPersonalizados.splice(index, 1);
+        localStorage.setItem(
+          'fondosPersonalizados',
+          JSON.stringify(fondosPersonalizados)
+        );
+        // Si el fondo borrado era el activo, vuelve al negro por defecto
+        if (localStorage.getItem('fondoElegido') === fondoUrl) {
+          aplicarFondo('negro');
+          actualizarFondoActivo('negro');
+        }
+        renderizarFondos();
+      }
+    };
 
-        thumbnail.appendChild(btnBorrar);
-        galeriaFondos.appendChild(thumbnail);
-    });
+    thumbnail.appendChild(btnBorrar);
+    galeriaFondos.appendChild(thumbnail);
+  });
 }
 
 function getDragAfterElement(container, y) {
-    const draggableElements = [...container.querySelectorAll('.item-setlist:not(.dragging)')];
+  const draggableElements = [
+    ...container.querySelectorAll('.item-setlist:not(.dragging)'),
+  ];
 
-    return draggableElements.reduce((closest, child) => {
-        const box = child.getBoundingClientRect();
-        const offset = y - box.top - box.height / 2;
-        if (offset < 0 && offset > closest.offset) {
-            return { offset: offset, element: child };
-        } else {
-            return closest;
-        }
-    }, { offset: Number.NEGATIVE_INFINITY }).element;
+  return draggableElements.reduce(
+    (closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) {
+        return { offset: offset, element: child };
+      } else {
+        return closest;
+      }
+    },
+    { offset: Number.NEGATIVE_INFINITY }
+  ).element;
 }
 
-lienzo.addEventListener('dragover', e => {
-    e.preventDefault();
+lienzo.addEventListener('dragover', (e) => {
+  e.preventDefault();
 });
 
-lienzo.addEventListener('drop', e => {
-    e.preventDefault();
-    const dataString = e.dataTransfer.getData('text/plain');
+lienzo.addEventListener('drop', (e) => {
+  e.preventDefault();
+  const dataString = e.dataTransfer.getData('text/plain');
 
-    // Si el dato no es un JSON para una canción, no hacer nada.
-    // Esto evita el conflicto con el arrastre del cuadro de información.
-    if (!dataString || !dataString.startsWith('{')) {
-        return;
-    }
+  // Si el dato no es un JSON para una canción, no hacer nada.
+  // Esto evita el conflicto con el arrastre del cuadro de información.
+  if (!dataString || !dataString.startsWith('{')) {
+    return;
+  }
 
-    const draggableElements = [...setlistContenedor.querySelectorAll('.item-setlist:not(.dragging)')];
-    const afterElement = getDragAfterElement(setlistContenedor, e.clientY);
+  const draggableElements = [
+    ...setlistContenedor.querySelectorAll('.item-setlist:not(.dragging)'),
+  ];
+  const afterElement = getDragAfterElement(setlistContenedor, e.clientY);
 
-    const data = JSON.parse(dataString);
+  const data = JSON.parse(dataString);
 
-    if (data.source === 'catalog') {
-        const newSong = { type: 'song', nombre: data.nombre, observacion: '' };
-        const index = afterElement ? draggableElements.indexOf(afterElement) : draggableElements.length;
-        setlist.splice(index, 0, newSong);
-    }
-    
-    guardarSetlist();
-    renderizarSetlist();
+  if (data.source === 'catalog') {
+    const newSong = { type: 'song', nombre: data.nombre, observacion: '' };
+    const index = afterElement
+      ? draggableElements.indexOf(afterElement)
+      : draggableElements.length;
+    setlist.splice(index, 0, newSong);
+  }
+
+  guardarSetlist();
+  renderizarSetlist();
 });
 
 if (subirFondo) {
-    subirFondo.onchange = (e) => {
-        if (!e.target.files || !e.target.files[0]) return;
+  subirFondo.onchange = (e) => {
+    if (!e.target.files || !e.target.files[0]) return;
 
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const imgDataUrl = event.target.result;
-            fondosPersonalizados.push(imgDataUrl);
-            localStorage.setItem('fondosPersonalizados', JSON.stringify(fondosPersonalizados));
-            
-            renderizarFondos();
-            
-            aplicarFondo(imgDataUrl);
-            actualizarFondoActivo(imgDataUrl);
-        };
-        reader.readAsDataURL(e.target.files[0]);
-        e.target.value = '';
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const imgDataUrl = event.target.result;
+      fondosPersonalizados.push(imgDataUrl);
+      localStorage.setItem(
+        'fondosPersonalizados',
+        JSON.stringify(fondosPersonalizados)
+      );
+
+      renderizarFondos();
+
+      aplicarFondo(imgDataUrl);
+      actualizarFondoActivo(imgDataUrl);
     };
+    reader.readAsDataURL(e.target.files[0]);
+    e.target.value = '';
+  };
 }
 
 inputEvento.oninput = () => {
-    const eventName = inputEvento.value;
-    localStorage.setItem('nombreEvento', eventName);
-    displayTitulo.textContent = eventName;
-    displayTitulo.style.visibility = eventName ? 'visible' : 'hidden';
-    clearEvento.style.display = eventName ? 'block' : 'none';
+  const eventName = inputEvento.value;
+  localStorage.setItem('nombreEvento', eventName);
+  displayTitulo.textContent = eventName;
+  displayTitulo.style.visibility = eventName ? 'visible' : 'hidden';
+  clearEvento.style.display = eventName ? 'block' : 'none';
 };
 
 inputFecha.onchange = () => {
-    const showDate = inputFecha.value;
-    localStorage.setItem('fechaShow', showDate);
-    clearFecha.style.display = showDate ? 'block' : 'none';
-    if (showDate) {
-        const date = new Date(showDate + 'T00:00:00'); // Evitar problemas de zona horaria
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        displayFecha.textContent = date.toLocaleDateString('es-ES', options);
-        displayFecha.style.visibility = 'visible';
-    } else {
-        displayFecha.textContent = '';
-        displayFecha.style.visibility = 'hidden';
-    }
+  const showDate = inputFecha.value;
+  localStorage.setItem('fechaShow', showDate);
+  clearFecha.style.display = showDate ? 'block' : 'none';
+  if (showDate) {
+    const date = new Date(showDate + 'T00:00:00'); // Evitar problemas de zona horaria
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    displayFecha.textContent = date.toLocaleDateString('es-ES', options);
+    displayFecha.style.visibility = 'visible';
+  } else {
+    displayFecha.textContent = '';
+    displayFecha.style.visibility = 'hidden';
+  }
 };
 
 clearEvento.onclick = () => {
-    inputEvento.value = '';
-    inputEvento.dispatchEvent(new Event('input'));
+  inputEvento.value = '';
+  inputEvento.dispatchEvent(new Event('input'));
 };
 
 clearFecha.onclick = () => {
-    inputFecha.value = '';
-    inputFecha.dispatchEvent(new Event('change'));
+  inputFecha.value = '';
+  inputFecha.dispatchEvent(new Event('change'));
 };
 
 function makeVerticallyDraggable(element, storageKey, defaultConfig) {
-    let position = JSON.parse(localStorage.getItem(storageKey)) || defaultConfig;
+  let position = JSON.parse(localStorage.getItem(storageKey)) || defaultConfig;
 
-    // Apply initial position
-    element.style.top = position.top;
+  // Apply initial position
+  element.style.top = position.top;
 
-    element.addEventListener('mousedown', (e) => {
-        // No arrastrar si se hace clic en un botón de control
-        if (e.target.closest('.btn-borrar-setlist, .btn-add-obs, .btn-add-break')) {
-            return;
-        }
-        if (e.button !== 0) return; // Solo mover con el botón izquierdo
-        e.preventDefault(); // Previene la selección de texto
+  element.addEventListener('mousedown', (e) => {
+    // No arrastrar si se hace clic en un botón de control
+    if (e.target.closest('.btn-borrar-setlist, .btn-add-obs, .btn-add-break')) {
+      return;
+    }
+    if (e.button !== 0) return; // Solo mover con el botón izquierdo
+    e.preventDefault(); // Previene la selección de texto
 
-        const lienzoRect = lienzo.getBoundingClientRect();
-        const offsetY = e.clientY - element.getBoundingClientRect().top;
+    const lienzoRect = lienzo.getBoundingClientRect();
+    const offsetY = e.clientY - element.getBoundingClientRect().top;
 
-        function onMouseMove(moveEvent) {
-            let newY = moveEvent.clientY - lienzoRect.top - offsetY;
+    function onMouseMove(moveEvent) {
+      let newY = moveEvent.clientY - lienzoRect.top - offsetY;
 
-            // Limitar al contenedor
-            newY = Math.max(0, Math.min(newY, lienzoRect.height - element.offsetHeight));
+      // Limitar al contenedor
+      newY = Math.max(0, Math.min(newY, lienzoRect.height - element.offsetHeight));
 
-            element.style.top = `${newY}px`;
-        }
+      element.style.top = `${newY}px`;
+    }
 
-        function onMouseUp() {
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', onMouseUp);
+    function onMouseUp() {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
 
-            // Guardar la posición final
-            position = { top: element.style.top };
-            localStorage.setItem(storageKey, JSON.stringify(position));
-        }
+      // Guardar la posición final
+      position = { top: element.style.top };
+      localStorage.setItem(storageKey, JSON.stringify(position));
+    }
 
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-    });
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  });
 }
 
 // --- Lógica de Posición de Texto ---
 function makeDraggable(element, storageKey, defaultConfig) {
-    let position = JSON.parse(localStorage.getItem(storageKey)) || defaultConfig;
+  let position = JSON.parse(localStorage.getItem(storageKey)) || defaultConfig;
 
-    // Apply initial position
-    element.style.top = position.top;
-    element.style.left = position.left;
-    element.style.transform = position.transform;
+  // Apply initial position
+  element.style.top = position.top;
+  element.style.left = position.left;
+  element.style.transform = position.transform;
 
-    element.addEventListener('mousedown', (e) => {
-        if (e.button !== 0) return; // Solo mover con el botón izquierdo
-        e.preventDefault();
+  element.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return; // Solo mover con el botón izquierdo
+    e.preventDefault();
 
-        const lienzoRect = lienzo.getBoundingClientRect();
-        const offsetX = e.clientX - element.getBoundingClientRect().left;
-        const offsetY = e.clientY - element.getBoundingClientRect().top;
+    const lienzoRect = lienzo.getBoundingClientRect();
+    const offsetX = e.clientX - element.getBoundingClientRect().left;
+    const offsetY = e.clientY - element.getBoundingClientRect().top;
 
-        function onMouseMove(moveEvent) {
-            let newX = moveEvent.clientX - lienzoRect.left - offsetX;
-            let newY = moveEvent.clientY - lienzoRect.top - offsetY;
+    function onMouseMove(moveEvent) {
+      let newX = moveEvent.clientX - lienzoRect.left - offsetX;
+      let newY = moveEvent.clientY - lienzoRect.top - offsetY;
 
-            // Lógica para centrar y mostrar guía
-            const elementCenter = newX + element.offsetWidth / 2;
-            const lienzoCenter = lienzoRect.width / 2;
-            const snapThreshold = 5; // píxeles
+      // Lógica para centrar y mostrar guía
+      const elementCenter = newX + element.offsetWidth / 2;
+      const lienzoCenter = lienzoRect.width / 2;
+      const snapThreshold = 5; // píxeles
 
-            if (Math.abs(elementCenter - lienzoCenter) < snapThreshold) {
-                newX = lienzoCenter - element.offsetWidth / 2;
-                centerGuide.style.display = 'block';
-            } else {
-                centerGuide.style.display = 'none';
-            }
+      if (Math.abs(elementCenter - lienzoCenter) < snapThreshold) {
+        newX = lienzoCenter - element.offsetWidth / 2;
+        centerGuide.style.display = 'block';
+      } else {
+        centerGuide.style.display = 'none';
+      }
 
-            // Limitar al contenedor
-            newX = Math.max(0, Math.min(newX, lienzoRect.width - element.offsetWidth));
-            newY = Math.max(0, Math.min(newY, lienzoRect.height - element.offsetHeight));
+      // Limitar al contenedor
+      newX = Math.max(0, Math.min(newX, lienzoRect.width - element.offsetWidth));
+      newY = Math.max(0, Math.min(newY, lienzoRect.height - element.offsetHeight));
 
-            element.style.left = `${newX}px`;
-            element.style.top = `${newY}px`;
-            element.style.transform = 'translateX(0)'; // Anular el centrado inicial
-        }
+      element.style.left = `${newX}px`;
+      element.style.top = `${newY}px`;
+      element.style.transform = 'translateX(0)'; // Anular el centrado inicial
+    }
 
-        function onMouseUp() {
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', onMouseUp);
-            centerGuide.style.display = 'none'; // Ocultar guía
+    function onMouseUp() {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      centerGuide.style.display = 'none'; // Ocultar guía
 
-            // Guardar la posición final
-            position = {
-                top: element.style.top,
-                left: element.style.left,
-                transform: element.style.transform
-            };
-            localStorage.setItem(storageKey, JSON.stringify(position));
-        }
+      // Guardar la posición final
+      position = {
+        top: element.style.top,
+        left: element.style.left,
+        transform: element.style.transform,
+      };
+      localStorage.setItem(storageKey, JSON.stringify(position));
+    }
 
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-    });
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  });
 }
 
 // --- Carga Inicial al Abrir la App ---
 window.onload = () => {
-    const savedEventName = localStorage.getItem('nombreEvento') || '';
-    inputEvento.value = savedEventName;
-    displayTitulo.textContent = savedEventName;
-    displayTitulo.style.visibility = savedEventName ? 'visible' : 'hidden';
-    clearEvento.style.display = savedEventName ? 'block' : 'none';
+  const savedEventName = localStorage.getItem('nombreEvento') || '';
+  inputEvento.value = savedEventName;
+  displayTitulo.textContent = savedEventName;
+  displayTitulo.style.visibility = savedEventName ? 'visible' : 'hidden';
+  clearEvento.style.display = savedEventName ? 'block' : 'none';
 
-    const savedShowDate = localStorage.getItem('fechaShow') || '';
-    inputFecha.value = savedShowDate;
-    clearFecha.style.display = savedShowDate ? 'block' : 'none';
-    if (savedShowDate) {
-        const date = new Date(savedShowDate + 'T00:00:00');
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        displayFecha.textContent = date.toLocaleDateString('es-ES', options);
-        displayFecha.style.visibility = 'visible';
-    } else {
-        displayFecha.textContent = '';
-        displayFecha.style.visibility = 'hidden';
-    }
+  const savedShowDate = localStorage.getItem('fechaShow') || '';
+  inputFecha.value = savedShowDate;
+  clearFecha.style.display = savedShowDate ? 'block' : 'none';
+  if (savedShowDate) {
+    const date = new Date(savedShowDate + 'T00:00:00');
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    displayFecha.textContent = date.toLocaleDateString('es-ES', options);
+    displayFecha.style.visibility = 'visible';
+  } else {
+    displayFecha.textContent = '';
+    displayFecha.style.visibility = 'hidden';
+  }
 
-    renderizar(listaActual);
-    renderizarSetlist();
+  renderizar(listaActual);
+  renderizarSetlist();
 
-    // Carga de fondos
-    renderizarFondos();
-    const fondoGuardado = localStorage.getItem('fondoElegido') || 'negro'; // Negro por defecto
-    aplicarFondo(fondoGuardado);
-    actualizarFondoActivo(fondoGuardado);
+  // Carga de fondos
+  renderizarFondos();
+  const fondoGuardado = localStorage.getItem('fondoElegido') || 'negro'; // Negro por defecto
+  aplicarFondo(fondoGuardado);
+  actualizarFondoActivo(fondoGuardado);
 
-    // Sincronizar los selectores de color con los valores guardados (si existen)
-    if (colorEventoPersonalizado) {
-        inputColorEvento.value = colorEventoPersonalizado;
-    }
-    if (colorFechaPersonalizado) {
-        inputColorFecha.value = colorFechaPersonalizado;
-    }
+  // Sincronizar los selectores de color con los valores guardados (si existen)
+  if (colorEventoPersonalizado) {
+    inputColorEvento.value = colorEventoPersonalizado;
+  }
+  if (colorFechaPersonalizado) {
+    inputColorFecha.value = colorFechaPersonalizado;
+  }
 
-    // Iniciar la funcionalidad de arrastre para ambos elementos
-    makeDraggable(displayTituloContainer, 'titleBoxPosition', { top: '40px', left: '50%', transform: 'translateX(-50%)' });
-    makeDraggable(displayFechaContainer, 'dateBoxPosition', { top: '70px', left: '50%', transform: 'translateX(-50%)' });
-    makeVerticallyDraggable(setlistContenedor, 'songBlockPosition', { top: '120px' });
+  // Iniciar la funcionalidad de arrastre para ambos elementos
+  makeDraggable(displayTituloContainer, 'titleBoxPosition', {
+    top: '40px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+  });
+  makeDraggable(displayFechaContainer, 'dateBoxPosition', {
+    top: '70px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+  });
+  makeVerticallyDraggable(setlistContenedor, 'songBlockPosition', {
+    top: '120px',
+  });
 };

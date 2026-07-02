@@ -1,0 +1,26 @@
+{
+  "name": "setlist-cue-sheet",
+  "version": "1.0.0",
+  "description": "Un armador visual de setlists interactivo.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "author": "Tu Nombre",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  },
+  "build": {
+    "appId": "com.tudominio.setlistcuesheet",
+    "asar": false,
+    "mac": {
+      "category": "public.app-category.music"
+    }
+  }
+}
