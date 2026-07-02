@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Setlist Cue Sheet</title>
+    <link rel="stylesheet" href="estilos.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Cue Sheet | Creador de Setlist</h1>
+    </header>
+
+    <main class="contenedor-principal">
+      <section class="panel-catalogo">
+        <h2>Catálogo Disponible</h2>
+
+        <div class="input-grupo">
+          <input
+            type="text"
+            id="nueva-cancion"
+            placeholder="Nueva canción..."
+          />
+          <button id="btn-agregar" class="btn-neon">+</button>
+        </div>
+
+        <input
+          type="text"
+          id="buscador"
+          placeholder="🔍 Buscar canción..."
+          class="input-busqueda"
+        />
+        <div id="canciones" class="contenedor-drag"></div>
+      </section>
+
+      <section class="panel-setlist">
+        <div class="cabecera-setlist">
+          <h2>Setlist Oficial</h2>
+          <div class="grupo-botones-cabecera">
+            <button id="btn-exportar-img" class="btn-neon">
+              Exportar Imagen
+            </button>
+            <button id="btn-exportar-pdf" class="btn-neon">Exportar PDF</button>
+          </div>
+        </div>
+
+        <div class="controles-setlist">
+          <input
+            type="text"
+            id="nombre-evento"
+            placeholder="Nombre del evento..."
+            class="input-evento"
+          />
+          <input type="date" id="fecha-show" class="input-fecha" />
+        </div>
+
+        <div class="controles-fondo">
+          <p class="subtitulo-controles">Fondo para Exportación (9:16)</p>
+          <div id="galeria-fondos" class="galeria-fondos-horizontal">
+            <!-- Las miniaturas de los fondos se generarán aquí -->
+          </div>
+          <label for="subir-fondo" class="btn-subir"> + Añadir Imagen </label>
+          <input type="file" id="subir-fondo" accept="image/*" hidden />
+        </div>
+        <div id="canvas-setlist" class="lienzo-oscuro">
+          <div id="display-info" class="display-info-estilo">
+            <h3 id="titulo-evento">Nombre del Evento</h3>
+            <p id="subtitulo-fecha">Fecha del Show</p>
+          </div>
+          <div id="setlist-activo" class="contenedor-drag"></div>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="canciones.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
