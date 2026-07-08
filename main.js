@@ -10,6 +10,8 @@ function createWindow() {
     height: 900,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
+      // Habilitar contextIsolation es crucial para la seguridad y para que el preload script funcione correctamente.
+      contextIsolation: true,
     },
   });
 

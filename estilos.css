@@ -37,6 +37,72 @@ header h1 {
     padding: 20px; 
     gap: 20px; 
     min-height: 0; 
+    align-items: flex-start;
+}
+
+.panel-controles-derecha {
+    flex: 0 0 220px; /* Ancho para que quepan bien los controles */
+    background: var(--fondo-paneles);
+    padding: 20px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-controles-derecha .subtitulo-controles {
+    text-align: center;
+}
+
+/* Panel Escenas */
+.panel-escenas {
+    /* El panel ahora es parte de los controles de la derecha, hereda su estilo */
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.panel-escenas .subtitulo-controles {
+    margin-bottom: 5px; /* Reducir margen para un look más compacto */
+    text-align: center;
+}
+
+.grupo-escena-selector,
+.grupo-escena-acciones,
+.grupo-escena-guardar {
+    display: flex;
+    gap: 10px;
+}
+
+.grupo-escena-acciones button {
+    flex: 1; /* Para que los botones Cargar y Borrar ocupen el mismo espacio */
+}
+
+.grupo-escena-acciones .btn-limpiar {
+    /* Anula el estilo heredado para que se ajuste al contenedor flex */
+    width: auto;
+    margin-bottom: 0;
+}
+
+.escena-divisor {
+    border: none;
+    border-top: 1px solid var(--gris-borde);
+    margin: 0; /* Sin margen extra */
+}
+
+.input-escena {
+    flex-grow: 1;
+    padding: 10px;
+    background: #2c2c2c;
+    border: 1px solid var(--gris-borde);
+    color: var(--blanco-texto);
+    border-radius: 4px;
+    outline: none;
+}
+
+.panel-divisor {
+    border: none;
+    border-top: 1px solid var(--gris-borde);
+    margin: 20px 0;
 }
 
 /* Panel Catálogo */
@@ -56,6 +122,12 @@ header h1 {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+}
+
+.panel-divisor {
+    border: none;
+    border-top: 1px solid var(--gris-borde);
+    margin: 20px 0;
 }
 
 .grupo-botones-catalogo {
@@ -140,8 +212,7 @@ header h1 {
     cursor: grab;
     direction: ltr;
     color: var(--blanco-texto);
-    text-align: center; /* Centrado perfecto del texto */
-    line-height: 1.2; /* Hacer las líneas más compactas */
+    line-height: 1.2;
 }
 .item-setlist:hover { background-color: rgba(255,255,255,0.05); }
 
@@ -236,6 +307,20 @@ header h1 {
     left: 0;
     cursor: move;
     z-index: 9;
+    /* Añadir padding para tener un área donde hacer clic y arrastrar el bloque completo */
+    padding: 10px 0;
+    text-align: center; /* Alineación por defecto */
+}
+
+/* Modificadores de alineación para el contenedor del setlist */
+#setlist-activo.align-left {
+    text-align: left;
+}
+#setlist-activo.align-center {
+    text-align: center;
+}
+#setlist-activo.align-right {
+    text-align: right;
 }
 
 /* Panel Setlist */
@@ -245,18 +330,12 @@ header h1 {
     display: flex;
     gap: 10px;
 }
-
-
 /* --- Controles de Fondo --- */
 .subtitulo-controles {
     color: var(--gris-texto);
     text-transform: uppercase;
     font-size: 0.8rem;
     margin-bottom: 10px;
-}
-.controles-fondo {
-    /* Movido al panel izquierdo, debajo de la lista de canciones */
-    margin-top: 20px;
 }
 
 .galeria-fondos-horizontal {
@@ -443,18 +522,14 @@ header h1 {
     border-radius: 4px;
 }
 
-.cabecera-catalogo .btn-neon {
-    padding: 8px 12px;
-    font-size: 0.8rem;
-    text-transform: none;
-}
-
 .btn-neon:hover {
     background-color: var(--neon-acento);
     color: var(--vanta-black);
 }
 
 .btn-neon.btn-limpiar {
+    width: 100%;
+    margin-bottom: 20px;
     border-color: #ff4d4d;
     color: #ff4d4d;
 }
@@ -462,6 +537,12 @@ header h1 {
 .btn-neon.btn-limpiar:hover {
     background-color: #ff4d4d;
     color: var(--blanco-texto);
+}
+
+.cabecera-catalogo .btn-neon {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    text-transform: none;
 }
 
 .btn-neon.btn-icono {
@@ -485,7 +566,7 @@ header h1 {
     transition: background 0.3s ease;
     width: 100%; /* Ocupar el ancho disponible del panel */
     max-width: 405px; /* Limitar para que no sea demasiado grande */
-    aspect-ratio: 9 / 16; /* Forzar la proporción 9:16 para un preview realista */
+    aspect-ratio: 9 / 16;
     margin: 0 auto; /* Centrar el lienzo en el panel */
     position: relative; /* Para posicionar elementos hijos de forma absoluta */
 }
@@ -503,7 +584,167 @@ header h1 {
     box-shadow: 0 0 7px rgba(225, 86, 0, 0.5);
 }
 
+.grupo-alineacion {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-align {
+    background: #1a1a1a;
+    border: 1px solid var(--gris-borde);
+    color: var(--gris-texto);
+    padding: 12px 10px;
+    flex: 1; /* Para que ocupen el mismo espacio */
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s, color 0.2s;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.btn-align:hover {
+    background-color: #333;
+    color: var(--blanco-texto);
+}
+
+.btn-align.activo {
+    background-color: var(--neon-acento);
+    color: var(--vanta-black);
+    border-color: var(--neon-acento);
+}
+
+/* --- Controles de Complementos --- */
+.grupo-acciones-complemento {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.grupo-acciones-complemento .btn-neon {
+    width: 100%;
+}
+
+/* --- Complemento en el Lienzo --- */
+.complemento-container {
+    position: absolute;
+    cursor: move;
+    z-index: 11; /* Above text boxes */
+}
+
+.complemento-container img {
+    width: 100%;
+    height: auto;
+    display: block;
+    pointer-events: none; /* So drag is on container */
+}
+
+.resize-handle {
+    position: absolute;
+    bottom: -5px;
+    right: -5px;
+    width: 15px;
+    height: 15px;
+    background: var(--neon-acento);
+    border: 2px solid var(--blanco-texto);
+    border-radius: 50%;
+    cursor: se-resize;
+}
+.btn-borrar-complemento {
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    width: 22px;
+    height: 22px;
+    background-color: #ff4d4d;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 12;
+    border: 2px solid var(--blanco-texto);
+}
+.complemento-container:hover .btn-borrar-complemento {
+    opacity: 1;
+}
+
+.lienzo-oscuro.exporting .resize-handle,
+.lienzo-oscuro.exporting .btn-borrar-complemento {
+    display: none;
+}
 /* --- Display de Info dentro del Lienzo --- */
+.galeria-complementos-horizontal {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 2px dashed var(--gris-borde);
+    border-radius: 4px;
+    min-height: 95px;
+    align-content: flex-start;
+}
+
+.galeria-complementos-horizontal.vacia {
+    justify-content: center;
+    align-items: center;
+}
+
+.galeria-placeholder {
+    color: var(--gris-texto);
+    font-size: 0.8rem;
+    text-align: center;
+    padding: 10px;
+}
+
+.complemento-galeria-thumbnail {
+    width: 75px;
+    height: 75px;
+    border: 2px solid var(--gris-borde);
+    border-radius: 4px;
+    cursor: pointer;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+    flex-shrink: 0;
+    background-color: #222;
+}
+
+.complemento-galeria-thumbnail.activo {
+    border-color: var(--neon-acento);
+}
+
+.btn-borrar-complemento-galeria {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background-color: rgba(255, 77, 77, 0.9);
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.complemento-galeria-thumbnail:hover .btn-borrar-complemento-galeria {
+    opacity: 1;
+}
 .display-info-estilo {
     position: absolute;
     width: 90%;

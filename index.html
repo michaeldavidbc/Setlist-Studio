@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Setlist Cue Sheet</title>
+    <link rel="manifest" href="manifest.json" />
+    <!-- PWA meta tags for iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-title" content="Cue Sheet" />
     <link rel="stylesheet" href="estilos.css" />
   </head>
   <body>
@@ -91,6 +96,12 @@
             Setlist Oficial<span id="contador-setlist" class="contador"></span>
           </h2>
           <div class="grupo-botones-cabecera">
+            <button id="btn-undo" class="btn-neon btn-icono" title="Deshacer">
+              ↶
+            </button>
+            <button id="btn-redo" class="btn-neon btn-icono" title="Rehacer">
+              ↷
+            </button>
             <button id="btn-exportar-img" class="btn-neon">
               Exportar Imagen
             </button>
@@ -156,7 +167,8 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="canciones.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="app.js"></script>
+    <script src="ui.js"></script>
   </body>
 </html>
