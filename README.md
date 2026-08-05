@@ -1,5 +1,5 @@
 ¿Qué es exactamente su aplicación?
-Es una herramienta digital de Cue Sheet y Stage Management diseñada para agilizar la creación y distribución del orden de las canciones para el equipo técnico y los músicos de un artista.
+**Setlist Studio** es una herramienta digital de Cue Sheet y Stage Management diseñada para agilizar la creación y distribución del orden de las canciones para el equipo técnico y los músicos de un artista.
 
 En términos sencillos, es un "armador visual de setlists" interactivo que reemplaza tener que escribir listas a mano o copiar y pegar texto en documentos aburridos.
 

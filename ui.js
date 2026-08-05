@@ -1014,7 +1014,7 @@ function setupSceneControls() {
   const btnGuardarEscena = panelEscenas.querySelector('#btn-guardar-escena');
   const btnBorrarEscena = panelEscenas.querySelector('#btn-borrar-escena');
 
-  const SCENES_KEY = 'cueSheetApp_scenes';
+  const SCENES_KEY = 'setlistStudio_scenes';
   const KEYS_TO_SAVE = [
       'setlistData', 'setlistActivo', 'setlistAlignment', 'colorEvento',
       'colorFecha', 'fondoElegido', 'nombreEvento', 'fechaShow', 'titleBoxPosition', 'dateBoxPosition', 'songBlockPosition', 'activeComplements',

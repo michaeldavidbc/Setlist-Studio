@@ -1,6 +1,6 @@
 {
-  "name": "Setlist Cue Sheet",
-  "short_name": "Cue Sheet",
+  "name": "Setlist Studio",
+  "short_name": "Setlist Studio",
   "description": "Creador visual de Setlists para músicos y equipos técnicos.",
   "start_url": "./index.html",
   "display": "standalone",

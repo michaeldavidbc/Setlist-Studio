@@ -1,7 +1,7 @@
 {
-  "name": "setlist-cue-sheet",
+  "name": "setlist-studio",
   "version": "1.0.0",
-  "description": "Un armador visual de setlists interactivo.",
+  "description": "Setlist Studio: Un armador visual de setlists interactivo.",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -17,7 +17,7 @@
     "xlsx": "^0.18.5"
   },
   "build": {
-    "appId": "com.tudominio.setlistcuesheet",
+    "appId": "com.tudominio.setliststudio",
     "asar": false,
     "mac": {
       "category": "public.app-category.music"
