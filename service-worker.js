@@ -1,10 +1,11 @@
-const CACHE_NAME = 'cue-sheet-cache-v6';
+const CACHE_NAME = 'cue-sheet-cache-v8';
 const urlsToCache = [
   './',
   './index.html',
   './estilos.css',
   './app.js',
   './ui.js',
+  './logo.png',
   'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
