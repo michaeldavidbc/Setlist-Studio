@@ -31,6 +31,10 @@ header h1 {
     letter-spacing: 2px;
 }
 
+.sub-title {
+    color: var(--blanco-texto);
+}
+
 .contenedor-principal { 
     display: flex; 
     flex: 1; 
