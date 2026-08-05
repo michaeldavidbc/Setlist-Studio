@@ -1440,11 +1440,7 @@ function init() {
     const tituloFondos = document.querySelector('.titulo-fondos'); // Asumiendo que el título tiene esta clase
     if (controlesFondo) {
         panelControlesDerecha.appendChild(Object.assign(document.createElement('hr'), { className: 'panel-divisor' }));
-        if (tituloFondos) {
-            panelControlesDerecha.appendChild(tituloFondos);
-        } else {
-            panelControlesDerecha.appendChild(Object.assign(document.createElement('h2'), { textContent: 'Fondos', className: 'subtitulo-controles' }));
-        }
+        panelControlesDerecha.appendChild(Object.assign(document.createElement('h2'), { textContent: 'Fondos', className: 'subtitulo-controles' }));
         panelControlesDerecha.appendChild(controlesFondo);
     }
     setupDraggableUI();
