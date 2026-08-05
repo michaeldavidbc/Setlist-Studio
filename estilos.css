@@ -329,7 +329,19 @@ header h1 {
 
 /* Panel Setlist */
 .panel-setlist { flex: 2; display: flex; flex-direction: column; }
-.cabecera-setlist { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.cabecera-setlist {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; /* Alinear al inicio para que el título y los botones no se centren verticalmente */
+    margin-bottom: 15px;
+}
+
+.titulo-setlist-vertical h2 {
+    margin-bottom: 0;
+}
+.titulo-setlist-vertical .contador {
+    margin-left: 0;
+}
 .grupo-botones-cabecera {
     display: flex;
     gap: 10px;
